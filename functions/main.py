@@ -3,6 +3,9 @@ from firebase_admin import initialize_app
 from fastapi import FastAPI
 from src.routers import data, items
 
+## Db connection
+database_connection = database.connect()
+
 initialize_app()
 
 app = FastAPI()
