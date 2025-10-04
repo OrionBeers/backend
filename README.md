@@ -5,17 +5,17 @@
 Install the required dependencies:
 
 ```bash
-$ python -m venv .venv
-$ source .venv/bin/activate
+$ python -m venv venv
+$ source venv/bin/activate
 $ pip install -r requirements.txt
 ```
 
 ## Running Locally
 
-Start the development server on http://0.0.0.0:8000
+Start the development server on http://127.0.0.1:5001/orion-beers-backend/us-central1/api
 
 ```bash
-$ fastapi dev src/app.py
+$ firebase emulators:start
 ```
 
 When you make changes to your project, the server will automatically reload.

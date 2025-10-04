@@ -25,6 +25,8 @@ class UserUpdateRequest(BaseModel):
 async def get_user(
     email: str = Query(..., description="User email to search for"), status_code=status.HTTP_200_OK):
     try:
+        print("get_user")
+        print(email)
         user_details = UserDetails(email=email)
         result = user_details.execute()
         return result
