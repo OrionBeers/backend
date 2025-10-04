@@ -1,9 +1,10 @@
-from infrastructure.database.collections.sample_collections import SampleCollection
-from infrastructure.database.models.sample_model import SampleModel
+from src.infrastructure.database.collections.sample_collections import SampleCollection
+from src.infrastructure.database.models.sample_model import SampleModel
+import os
+
 
 
 def seed():
-
     for index in range(5):
         print('Seeding sample {}'.format(index))
         sample = {

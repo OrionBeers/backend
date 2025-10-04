@@ -1,6 +1,6 @@
 
-from infrastructure.database.interface.collection_interface import CollectionInterface
-from infrastructure.database.models.sample_model import SampleModel
+from src.infrastructure.database.interface.collection_interface import CollectionInterface
+from src.infrastructure.database.models.sample_model import SampleModel
 
 
 class SampleCollection(CollectionInterface):

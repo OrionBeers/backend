@@ -1,11 +1,12 @@
 import json
 from datetime import datetime
 
-
+from infrastructure.database import database
 from infrastructure.database.exceptions import NoChangesMade
 from infrastructure.database.interface.model_interface import ModelInterface
-from src.app import database_connection
 
+
+database_connection = database.connect()
 
 class CollectionInterface:
     collection_name = None
@@ -44,6 +45,21 @@ class CollectionInterface:
 
         if result.modified_count == 0:
             raise NoChangesMade(f'No changes made in update for repository {self.collection_name}')
+
+    def get_one(self, filter_by: dict, hidden_fields: list[str], force_show_fields: list[str]):
+        hidden_fields_dict = {}
+
+        fields_to_hide = set(hidden_fields or self.hidden_fields) - set(force_show_fields)
+
+        for item in fields_to_hide:
+            hidden_fields_dict[item] = 0
+
+        response = self._collection.find_one(filter_by, hidden_fields_dict)
+
+        if response:
+            return json.loads(json.dumps(response, default=str))
+
+        return None
 
     def list(self, filter_by: dict, hidden_fields: [str], force_show_fields: [str]) -> list[dict]:
         hidden_fields_dict = {}

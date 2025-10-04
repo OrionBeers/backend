@@ -2,18 +2,18 @@ from firebase_functions import https_fn
 from firebase_admin import initialize_app
 from fastapi import FastAPI
 from infrastructure.database import database
-from routers import data, items
-
-## Db connection
-database_connection = database.connect()
+from routers import users
+# from routers import data, items
 
 initialize_app()
 
 app = FastAPI()
 
+routes = [users.router]
+
 # Include routers
-app.include_router(data.router)
-app.include_router(items.router)
+for route in routes:
+    app.include_router(route)
 
 @https_fn.on_request()
 def api(req: https_fn.Request) -> https_fn.Response:
