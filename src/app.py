@@ -11,3 +11,7 @@ app = FastAPI(
 # Include routers
 app.include_router(data.router)
 app.include_router(items.router)
+
+@app.get("/")
+def get_index():
+    return { "message": "OK" }
