@@ -1,6 +1,7 @@
 from firebase_functions import https_fn
 from firebase_admin import initialize_app
 from fastapi import FastAPI
+from infrastructure.database import database
 from src.routers import data, items
 
 ## Db connection
