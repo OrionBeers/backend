@@ -1,11 +1,5 @@
 from fastapi import FastAPI
-from src.routers import data, items
-import firebase_functions as functions
-from infrastructure.database import database
-
-## Db connection
-database_connection = database.connect()
-
+from routers import users
 
 app = FastAPI(
     title="FastAPI + Firebase",
@@ -13,9 +7,12 @@ app = FastAPI(
     version="1.0.0",
 )
 
+routes = [users.router]
+
 # Include routers
-app.include_router(data.router)
-app.include_router(items.router)
+for route in routes:
+    app.include_router(route, prefix='/api')
+
 
 @app.get("/")
 def get_index():

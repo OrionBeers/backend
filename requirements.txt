@@ -38,4 +38,3 @@ uvloop==0.21.0
 watchfiles==1.1.0
 pymongo==4.15.2
 firebase-functions==0.4.3
-firebase-admin
