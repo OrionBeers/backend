@@ -15,6 +15,10 @@ jobs:
     permissions:
       contents: read
 
+    env:
+      PY_VERSION: "3.12"
+      FUNCTIONS_DIR: "functions"
+
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -23,6 +27,20 @@ jobs:
 
       - name: Install Firebase CLI
         run: npm i -g firebase-tools
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: functions
+          cache: "pip"
+          cache-dependency-path: |
+            functions/requirements.txt
+
+      - name: Create & prime venv for Functions
+        working-directory: functions
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          pip install -r requirements.txt
 
       - name: Deploy
         env:
