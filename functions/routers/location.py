@@ -6,7 +6,9 @@ from location.delete_location import LocationDelete
 from location.read_location import LocationDetails
 from pydantic import BaseModel
 
-router = APIRouter( tags=["locations"])
+router = APIRouter(
+    tags=["locations"],
+)
 
 
 class LocationCreateRequest(BaseModel):
