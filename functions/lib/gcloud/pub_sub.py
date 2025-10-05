@@ -1,3 +1,4 @@
+from typing import Literal, Optional
 from google.cloud import pubsub_v1
 from pydantic import BaseModel
 import json
@@ -15,12 +16,12 @@ class PublishPredictionPayload(BaseModel):
     longitude: float
     crop_type: str
     start_month: str
+    id_request: Optional[str] = None
+    prediction_days: Literal["full", "half"] = "full"
+    continue_to_next_month: Optional[bool] = False
+
 
 def publish_prediction(payload: PublishPredictionPayload):
-    publisher = pubsub_v1.PublisherClient()
-    topic = publisher.topic_path(PROJECT_ID, TOPIC_ID_PREDICTION)
-    publisher.publish(topic, json.dumps(payload.model_dump()).encode("utf-8"))
-
     ## Trying to insert at request Collection in Firestore
     try:
         data_to_insert = {
@@ -46,6 +47,15 @@ def publish_prediction(payload: PublishPredictionPayload):
         ## Inserting data in the realtime database
         update_request = UpdateRequest(**update_payload)
         update(update_request)
+
+        # Set id_request to continue the prediction
+        if payload.get("id_request") is None:
+            payload["id_request"] = request_id.inserted_id
+
+        publisher = pubsub_v1.PublisherClient()
+        topic = publisher.topic_path(PROJECT_ID, TOPIC_ID_PREDICTION)
+        publisher.publish(topic, json.dumps(payload.model_dump()).encode("utf-8"))
+
 
 
     except Exception as e:
