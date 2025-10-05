@@ -40,7 +40,7 @@ async def get_result(
 def start_prediction(body: PublishPredictionPayload):
     # Publish message to "prediction" topic in Pub/Sub to start prediction background task.
     logger.info(f"Publishing prediction request: {body.model_dump()}")
-    publish_prediction(body)
+    publish_prediction({ **body.model_dump(), "prediction_days": "full", "continue_to_next_month": True })
 
     return {"message": "Prediction started"}
 
@@ -50,7 +50,7 @@ def start_prediction(body: PublishPredictionPayload):
 def start_prediction_worker(event: pubsub_fn.CloudEvent[pubsub_fn.MessagePublishedData]) -> None:
     logger.info("PubSub message received on topic: %s", TOPIC_ID_PREDICTION)
     try:
-        data = event.data.message.json
+        data: PublishPredictionPayload = event.data.message.json
         logger.info(f"Message data: {json.dumps(data, indent=2)}")
         if not data:
             logger.error("No JSON payload in the message")
@@ -70,5 +70,27 @@ def start_prediction_worker(event: pubsub_fn.CloudEvent[pubsub_fn.MessagePublish
     try:
         PredictPlantingDate(id_user, data).execute()
         logger.info(f"Prediction completed successfully for user: {id_user}")
+
+        # Start next prediction if needed
+        # TODO: This should be decided by prediction result
+        to_be_continued = False
+        if to_be_continued == True:
+            start_month = data.get("start_month")
+            if data.get("continue_to_next_month"):
+                start_month = start_month + 1
+
+            # If continue_to_next_month is False, then continue to next month
+            continue_to_next_month = not data.get("continue_to_next_month")
+
+            payload = {
+                **data,
+                "id_request": data.get("id_request"),
+                "prediction_days": "half",
+                "start_month": start_month,
+                "continue_to_next_month": continue_to_next_month
+            }
+
+            publish_prediction(payload)
+
     except Exception as e:
         logger.error(f"Prediction failed for user {id_user}: {str(e)}")
