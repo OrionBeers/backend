@@ -1,50 +1,45 @@
 from copy import deepcopy 
 import json
 from typing import Any
+import requests
+import os
+import logging
 
 from backend.functions.lib.api.chatgpt.prediction_ai import get_month_forecast_array
 
 
-def filter_dataset_by_month(dataset: Any, month: str) -> dict[str, Any]:
-    """Return a copy containing only records for the given month (MM) across years."""
-    if not isinstance(month, str) or len(month) != 2 or not month.isdigit():
-        raise ValueError("month must be a string in 'MM' format")
+def _filter_dataset_by_month(dataset: dict, month: str) -> dict:
+        month_map = {
+            'January': '01', 'February': '02', 'March': '03', 'April': '04',
+            'May': '05', 'June': '06', 'July': '07', 'August': '08',
+            'September': '09', 'October': '10', 'November': '11', 'December': '12'
+        }
+        print("Month", month)
 
-    data_copy = deepcopy(dataset)
+        # Get the month number
+        if month not in month_map:
+            logging.error(f"[PredictPlantingDate worker] Invalid month: {month}")
+            return {}
 
-    properties = data_copy.get("properties", {})
-    parameters = properties.get("parameter")
-    if not isinstance(parameters, dict):
-        raise ValueError("dataset is missing properties.parameter mapping")
+        month_number = month_map[month]
 
-    collected_dates: list[str] = []
+        filtered_dataset = deepcopy(dataset)
 
-    for param_name, param_values in list(parameters.items()):
-        if not isinstance(param_values, dict):
-            # Nothing to filter (skip, keeps original value)
-            continue
 
-        filtered_values = {}
-        for date, value in param_values.items():
-            date_str = str(date)
-            if len(date_str) < 6:
-                continue
-            if date_str[-4:-2] == month:
-                filtered_values[date] = value
+        if 'properties' not in dataset or 'parameter' not in dataset['properties']:
+            logging.error("[PredictPlantingDate worker] Dataset does not have the expected structure")
+            return {}
 
-        parameters[param_name] = filtered_values
-        collected_dates.extend(filtered_values.keys())
+        for param_name, param_data in filtered_dataset['properties']['parameter'].items():
+            filtered_dates = {}
 
-    if not collected_dates:
-        raise ValueError(f"No measurements found for month {month}")
+            for date_key, value in param_data.items():
+                if len(date_key) == 8 and date_key[4:6] == month_number:
+                    filtered_dates[date_key] = value
 
-    header = data_copy.get("header")
-    if isinstance(header, dict):
-        collected_dates.sort()
-        header["start"] = collected_dates[0]
-        header["end"] = collected_dates[-1]
+            filtered_dataset['properties']['parameter'][param_name] = filtered_dates
 
-    return data_copy
+        return filtered_dataset
 
 nasaMock = {
     
@@ -8907,10 +8902,35 @@ cropMock = {
 }
 
 
+def _get_nasa_data():
+        try:
+            base_url = "https://power.larc.nasa.gov/api/temporal/daily/point"
+            params = {
+                "parameters": "T2M_MAX,T2M_MIN,RH2M,PRECTOTCORR,GWETROOT,GWETTOP,PRECSNO,TSOIL5",
+                "community": "re",
+                "longitude": "14.44",
+                "latitude": "50.0755",
+                "start": "20190101",
+                "end": "20211230",
+                "format": "json",
+                "units": "metric",
+                "header": "true"
+            }
+            response = requests.get(base_url, params=params)
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as e:
+            print(f"[PredictPlantingDate worker] Error fetching NASA data: {e}")
+            return None
 
 
 def prompt_test():
-    january_dataset = filter_dataset_by_month(nasaMock, "02")
+
+    fetchNasaData = _get_nasa_data()
+
+    #print("Fetched NASA Data:", fetchNasaData)
+
+    january_dataset = _filter_dataset_by_month(fetchNasaData, "January")
     response = get_month_forecast_array(
         current_year="2025",
         dataset_nasa=january_dataset,
