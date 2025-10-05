@@ -38,6 +38,9 @@ jobs:
           source venv/bin/activate
           pip install -r requirements.txt
 
+      - name: Create Firebase Service Account Key
+        run: echo '${{ secrets.SERVICE_ACCOUNT_JSON }}' > functions/serviceAccountKey.json
+
       - name: Deploy
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
@@ -50,3 +53,7 @@ jobs:
             --only functions \
             --non-interactive \
             --force
+
+      - name: Cleanup Service Account Key
+        if: always()
+        run: rm -f functions/serviceAccountKey.json
