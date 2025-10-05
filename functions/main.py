@@ -3,7 +3,11 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routers import users, publish, prediction, dashboard
 from routers.publish import *
+import firebase_admin
+from firebase_admin import credentials
 
+cred = credentials.Certificate("serviceAccountKey.json")
+firebase_admin.initialize_app(cred)
 
 app = FastAPI()
 
