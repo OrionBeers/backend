@@ -40,7 +40,7 @@ jobs:
 
       - name: Create Service Account Key
         run: |
-          echo '${{ secrets.SERVICE_ACCOUNT_JSON }}' > serviceAccountKey.json
+          echo '${{ secrets.SERVICE_ACCOUNT_JSON }}' > ${{ github.workspace }}/serviceAccountKey.json
 
       - name: Deploy
         env:

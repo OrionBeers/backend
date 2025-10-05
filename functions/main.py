@@ -7,7 +7,9 @@ import firebase_admin
 from firebase_admin import credentials
 
 cred = credentials.Certificate("serviceAccountKey.json")
-firebase_admin.initialize_app(cred)
+firebase_admin.initialize_app(cred, {
+    'databaseURL': 'https://orion-beers-backend-default-rtdb.firebaseio.com/'
+})
 
 app = FastAPI()
 
