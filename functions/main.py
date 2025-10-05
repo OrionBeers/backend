@@ -1,6 +1,7 @@
 from firebase_functions import https_fn
 from firebase_admin import initialize_app
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from infrastructure.database import database
 from routers import users
 # from routers import data, items
@@ -8,6 +9,15 @@ from routers import users
 initialize_app()
 
 app = FastAPI()
+
+# Configure CORS to allow all origins
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods
+    allow_headers=["*"],  # Allows all headers
+)
 
 routes = [users.router]
 
