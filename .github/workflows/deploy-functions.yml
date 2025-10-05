@@ -50,6 +50,7 @@ jobs:
           OPEN_AI_API_KEY: ${{ secrets.OPEN_AI_API_KEY }}
         run: |
           export GOOGLE_APPLICATION_CREDENTIALS="${{ github.workspace }}/serviceAccountKey.json"
+          ls -ltr ${{ github.workspace }}/serviceAccountKey.json
           firebase deploy \
             --only functions \
             --non-interactive \
