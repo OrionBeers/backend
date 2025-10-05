@@ -49,18 +49,15 @@ class ForecastResponse(BaseModel):
 # ---------- Public API ----------
 
 def get_month_forecast_array(
-  *,
-  month: str,           # "01".."12"
-  year: str,            # "YYYY"
-  dataset_json: dict,   # NASA POWER-style JSON
-  best_condition: dict,  # best condition JSON for the crop
-  api_key: Optional[str] = None,
+  current_year: str,            # "YYYY"
+  dataset_nasa: dict,   # NASA POWER-style JSON
+  best_conditions: dict,  # best condition JSON for the crop
 ) -> Optional[list[ForecastEntry]]:
     """
     Returns the parsed `forecast` list from the OpenAI response.
     """
     try:
-        openai_api_key = api_key or os.getenv("OPEN_AI_API_KEY")
+        openai_api_key = os.getenv("OPEN_AI_API_KEY")
         if not openai_api_key:
             raise ValueError("Set OPEN_AI_API_KEY or pass api_key.")
 
@@ -68,7 +65,7 @@ def get_month_forecast_array(
 
         system_prompt = "You are a meteorological prediction assistant specialized in NASA POWER datasets."
         user_prompt = build_user_prompt(
-            month=month, year=year, dataset_json=dataset_json, best_condition=best_condition
+            year=current_year, dataset_nasa=dataset_nasa, best_condition=best_conditions
         )
 
         response = client.beta.chat.completions.parse(
@@ -93,7 +90,7 @@ def get_month_forecast_array(
 
 # ---------- Prompt builder (your prompt verbatim) ----------
 
-def build_user_prompt(*, month: str, year: str, dataset_json: dict, best_condition: dict) -> str:
+def build_user_prompt(current_year: str, dataset_nasa: dict, best_condition: dict) -> str:
     # English prompt: produce predictions from NASA data and compute a status comparing predictions to best_condition
     return f"""
 You are an expert agronomist and data scientist. You will receive two JSON inputs: `best_condition` (optimal values for a crop) and `nasa_data` (NASA POWER time series). Your job is to:
@@ -153,7 +150,7 @@ ADDITIONAL RULES:
 
 INPUTS (for this run):
 best_condition = {best_condition}
-nasa_data = {dataset_json}
+nasa_data = {dataset_nasa}
 
 Now produce the requested JSON array following the rules above.
 """.strip()
