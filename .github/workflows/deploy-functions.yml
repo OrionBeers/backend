@@ -39,7 +39,7 @@ jobs:
           pip install -r requirements.txt
 
       - name: Create Firebase Service Account Key
-        run: echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}" | base64 -d > ${{ github.workspace }}/serviceAccountKey.json
+        run: echo "${{ secrets.SERVICE_ACCOUNT_JSON }}" | base64 -d > ${{ github.workspace }}/serviceAccountKey.json
 
       - name: Deploy
         env:
