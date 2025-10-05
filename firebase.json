@@ -9,7 +9,7 @@
   ],
   "emulators": {
     "pubsub": {
-      "port": "8085"
+      "port": 8085
     }
   }
 }
