@@ -11,6 +11,7 @@ from infrastructure.database.interface.model_interface import ModelInterface
 class RequestModel(ModelInterface):
     id: str = Field(alias="_id", default_factory=lambda: str(ObjectId()))
     id_user: str
+    data: dict
     status: Literal["pending", "processing", "completed", "failed"] = "pending"
 
     created_at: datetime = Field(default_factory=lambda: datetime.now())

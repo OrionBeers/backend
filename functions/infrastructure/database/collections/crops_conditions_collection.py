@@ -4,7 +4,7 @@ from infrastructure.database.models.crop_condition_model import CropConditionMod
 
 
 
-class UsersCollection(CollectionInterface):
+class CropsConditionCollection(CollectionInterface):
 
     collection_name = 'crops'
     entity_reference = CropConditionModel
