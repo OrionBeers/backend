@@ -74,7 +74,7 @@ def get_month_forecast_array(
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt},
             ],
-            max_tokens=12000,
+            max_tokens=4000,
             response_format=ForecastResponse,
         )
 
