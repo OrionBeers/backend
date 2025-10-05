@@ -49,14 +49,10 @@ def api(req: https_fn.Request) -> https_fn.Response:
         response = client.get(path, headers=headers, params=req.args)
     elif method == "POST":
         response = client.post(path, headers=headers, json=req.get_json(silent=True))
-    elif method == "PUT":
-        response = client.put(path, headers=headers, json=req.get_json(silent=True))
     elif method == "DELETE":
-        response = client.delete(path, headers=headers)
-    elif method == "PATCH":
-        response = client.patch(path, headers=headers, json=req.get_json(silent=True))
+        response = client.delete(path, headers=headers, params=req.args)
     else:
-        response = client.request(method, path, headers=headers)
+        return https_fn.Response(f"Method {method} not supported", status=405)
 
     # Return the response
     return (response.content, response.status_code, dict(response.headers))
