@@ -15,11 +15,8 @@ router = APIRouter(
 
 @router.post("/publish")
 def start_prediction(body: PublishPredictionPayload):
-    # Publish message to "prediction" topic in Pub/Sub to start prediction background task.
-    logger.info(f"Publishing prediction request: {body.model_dump()}")
-    publish_prediction(body)
-
-    return {"message": "Prediction started"}
+    id_request = publish_prediction(body)
+    return {"message": "Prediction started", "id_request": str(id_request.inserted_id)}
 
 # Pub/Sub subscriber
 # This is triggered when a message is published to "prediction" topic in Pub/Sub

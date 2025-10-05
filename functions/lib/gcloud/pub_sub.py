@@ -20,8 +20,6 @@ def publish_prediction(payload: PublishPredictionPayload):
     publisher = pubsub_v1.PublisherClient()
     topic = publisher.topic_path(PROJECT_ID, TOPIC_ID_PREDICTION)
     publisher.publish(topic, json.dumps(payload.model_dump()).encode("utf-8"))
-
-    ## Trying to insert at request Collection in Firestore
     try:
         data_to_insert = {
             "id_user": payload.id_user,
@@ -46,6 +44,8 @@ def publish_prediction(payload: PublishPredictionPayload):
         ## Inserting data in the realtime database
         update_request = UpdateRequest(**update_payload)
         update(update_request)
+
+        return request_id
 
 
     except Exception as e:

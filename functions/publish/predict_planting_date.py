@@ -12,8 +12,7 @@ class PredictPlantingDate:
 
     def execute(self):
         print(f"[PredictPlantingDate worker] start: {self.id_user}")
-        print(self.request)
-        crop = self.request["crop"]
+        crop = self.request["crop_type"]
 
         try:
             best_conditions = get_crop_best_conditions(crop)
