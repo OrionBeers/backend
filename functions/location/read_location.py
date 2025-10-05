@@ -4,16 +4,26 @@ from infrastructure.database.collections.locations_collection import LocationsCo
 
 
 class LocationDetails:
-    def __init__(self, user_id: str):
-        self.user_id = user_id
+    def __init__(self, id_user: str):
+        self.id_user = id_user
 
-    # Read one location by id
-    def execute(self, id: Optional[str] = None):
-        location = LocationsCollection().get_all(
-            filter_by={"id": id, "user_id": self.user_id},
-            hidden_fields=[],
-            force_show_fields=[],
-        )
+    def execute(self, id_location: Optional[str] = None):
+
+        if id_location is None:
+            location = LocationsCollection().list(
+                filter_by={"id_user": self.id_user},
+                hidden_fields=[],
+                force_show_fields=[],
+            )
+
+        else:
+            location = LocationsCollection().get_one(
+                filter_by={"_id": id_location, "id_user": self.id_user},
+                hidden_fields=[],
+                force_show_fields=[],
+            )
+
+
         if not location:
             raise Exception("Location not found")
 

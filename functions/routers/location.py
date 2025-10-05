@@ -6,38 +6,37 @@ from location.delete_location import LocationDelete
 from location.read_location import LocationDetails
 from pydantic import BaseModel
 
-router = APIRouter(prefix="/locations", tags=["locations"])
+router = APIRouter( tags=["locations"])
 
 
 class LocationCreateRequest(BaseModel):
     display_name: str
     latitude: float
     longitude: float
-    user_id: str
+    id_user: str
 
 
-@router.get("/")
-async def get_locations(
-    # get id for the location and id for the user
-    user_id: str = Query(..., description="The ID of the user"),
+@router.get("/locations")
+async def get_location_details(
+    id_user: str = Query(..., description="The ID of the user"),
     location_id: Optional[str] = Query(None, description="The ID of the location"),
 ):
     try:
-        location_details = LocationDetails(user_id=user_id)
-        result = location_details.execute(id=location_id)
+        location_details = LocationDetails(id_user=id_user)
+        result = location_details.execute(id_location=location_id)
         return result
     except Exception as e:
         raise HTTPException(status_code=404, detail=str(e))
 
 
-@router.post("/", status_code=status.HTTP_201_CREATED)
+@router.post("/locations", status_code=status.HTTP_201_CREATED)
 async def create_location(location_data: LocationCreateRequest):
     try:
         create_location_service = LocationCreate(
             display_name=location_data.display_name,
             latitude=location_data.latitude,
             longitude=location_data.longitude,
-            user_id=location_data.user_id,
+            id_user=location_data.id_user,
         )
         result = create_location_service.execute()
 
@@ -46,12 +45,13 @@ async def create_location(location_data: LocationCreateRequest):
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.delete("/", status_code=status.HTTP_200_OK)
+@router.delete("/locations", status_code=status.HTTP_200_OK)
 async def delete_location(
-    location_id: str = Query(..., description="The ID of the location to delete")
+        id_user: str = Query(..., description="The ID of the user"),
+        id_location: str = Query(..., description="The ID of the location to delete")
 ):
     try:
-        delete_service = LocationDelete(location_id=location_id)
+        delete_service = LocationDelete(id_user=id_user, id_location=id_location)
         result = delete_service.execute()
         return result
     except Exception as e:

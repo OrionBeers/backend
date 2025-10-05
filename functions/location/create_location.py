@@ -5,12 +5,12 @@ from infrastructure.database.models.location_model import LocationModel
 class LocationCreate:
     def __init__(
         self,
-        user_id: str,
+        id_user: str,
         display_name: str = None,
         latitude: float = None,
         longitude: float = None,
     ):
-        self.user_id = user_id
+        self.id_user = id_user
         self.display_name = display_name
         self.latitude = latitude
         self.longitude = longitude
@@ -20,7 +20,7 @@ class LocationCreate:
             "display_name": self.display_name,
             "latitude": self.latitude,
             "longitude": self.longitude,
-            "user_id": self.user_id,
+            "id_user": self.id_user,
         }
         LocationsCollection().insert(LocationModel(**location))
         print(f"Location created with name: {self.display_name}")
