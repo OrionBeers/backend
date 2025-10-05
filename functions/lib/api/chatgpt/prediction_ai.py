@@ -65,7 +65,7 @@ def get_month_forecast_array(
 
         system_prompt = "You are a meteorological prediction assistant specialized in NASA POWER datasets."
         user_prompt = build_user_prompt(
-            current_year=current_year, dataset_nasa=dataset_nasa, best_condition=best_conditions
+            current_year=current_year, dataset_nasa=dataset_nasa, best_conditions=best_conditions
         )
 
         response = client.chat.completions.create(
@@ -76,7 +76,7 @@ def get_month_forecast_array(
             ],
             max_tokens=4000,
             response_format={"type": "json_object"},
-            temperature=0.0  # Pro konzistentní výstupy
+            temperature=0.0  # For consistent outputs
         )
 
         content = response.choices[0].message.content
@@ -97,7 +97,7 @@ def get_month_forecast_array(
 
 # ---------- Prompt builder (your prompt verbatim) ----------
 
-def build_user_prompt(current_year: str, dataset_nasa: dict, best_condition: dict) -> str:
+def build_user_prompt(current_year: str, dataset_nasa: dict, best_conditions: dict) -> str:
     # English prompt: produce predictions from NASA data and compute a status comparing predictions to best_condition
     return f"""
 You are an expert agronomist and data scientist. You will receive two JSON inputs: `best_condition` (optimal values for a crop) and `nasa_data` (historical NASA POWER time series from past years). Your job is to:
@@ -151,12 +151,12 @@ OUTPUT REQUIREMENTS:
 }}
 
 ADDITIONAL RULES:
-- If the requested month is not present in the dataset, return `{{"forecast": []}}` (no error text).
 - Use deterministic outputs (temperature=0.0) and ensure valid JSON only.
 - If you cannot compute numeric `status` for a day, return `status`: null (no extra fields).
 
 INPUTS (for this run):
-best_condition = {best_condition}
+current_year = {current_year}
+best_condition = {best_conditions}
 nasa_data = {dataset_nasa}
 
 Now produce the requested JSON array following the rules above.

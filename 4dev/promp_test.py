@@ -8910,12 +8910,11 @@ cropMock = {
 
 
 def prompt_test():
-    january_dataset = filter_dataset_by_month(nasaMock, "01")
+    january_dataset = filter_dataset_by_month(nasaMock, "02")
     response = get_month_forecast_array(
-        month="01",
-        year="2026",
-        dataset_json=january_dataset,
-        best_condition=cropMock,
+        current_year="2025",
+        dataset_nasa=january_dataset,
+        best_conditions=cropMock,
     )
     if response is None:
         print("No forecast returned")
