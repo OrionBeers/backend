@@ -2,7 +2,7 @@ from datetime import datetime
 from pydantic import Field
 from bson.objectid import ObjectId
 
-from functions.infrastructure.database.interface.model_interface import ModelInterface
+from infrastructure.database.interface.model_interface import ModelInterface
 
 class HistoricalDataModel(ModelInterface):
     id: str = Field(alias="_id", default_factory=lambda: str(ObjectId()))

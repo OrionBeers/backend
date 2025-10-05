@@ -1,3 +1,5 @@
+import json
+
 from infrastructure.database.collections.dashboard_collection import DashboardCollection
 from infrastructure.database.collections.historical_data_collection import HistoricalDataCollection
 from datetime import datetime
@@ -31,13 +33,12 @@ class GetPredictionsResult:
                     "end_date": end_date_formatted
                 },
                 "crop": normalized_data.get('crop_types', 'crop'),
-                "calendar": normalized_data.get('normalized_timestamps', {}).get('calendar', []),
+                "calendar": normalized_data.get('normalized_timestamps', {}).get('calendar', {}),
             }
-
 
             dashboard_id =  self._save_prediction(final_data)
 
-            return {"_id":dashboard_id, "data":{final_data}}
+            return json.loads(json.dumps({"_id":dashboard_id, "data":final_data}, default=str))
 
         except Exception as e:
             raise Exception(f"Error retrieving predictions: {str(e)}")
@@ -68,10 +69,10 @@ class GetPredictionsResult:
     @staticmethod
     def _normalize_data(data):
         month_names = {
-            "01": "janeiro", "02": "fevereiro", "03": "março",
-            "04": "abril", "05": "maio", "06": "junho",
-            "07": "julho", "08": "agosto", "09": "setembro",
-            "10": "outubro", "11": "novembro", "12": "dezembro"
+            "01": "January", "02": "February", "03": "March",
+            "04": "April", "05": "May", "06": "June",
+            "07": "July", "08": "August", "09": "September",
+            "10": "October", "11": "November", "12": "December"
         }
 
         all_timestamps = []
