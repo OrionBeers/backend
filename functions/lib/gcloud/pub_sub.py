@@ -49,14 +49,21 @@ def publish_prediction(payload: PublishPredictionPayload):
         update(update_request)
 
         # Set id_request to continue the prediction
-        if payload.get("id_request") is None:
-            payload["id_request"] = request_id.inserted_id
+        # Using direct attribute access instead of .get() since payload is a Pydantic model
+        if payload.id_request is None:
+            # Need to update the model directly with new id_request
+            payload_dict = payload.model_dump()
+            payload_dict["id_request"] = request_id.inserted_id
+            # Create a new instance with the updated id_request
+            updated_payload = PublishPredictionPayload(**payload_dict)
 
-        publisher = pubsub_v1.PublisherClient()
-        topic = publisher.topic_path(PROJECT_ID, TOPIC_ID_PREDICTION)
-        publisher.publish(topic, json.dumps(payload.model_dump()).encode("utf-8"))
-
-
+            publisher = pubsub_v1.PublisherClient()
+            topic = publisher.topic_path(PROJECT_ID, TOPIC_ID_PREDICTION)
+            publisher.publish(topic, json.dumps(updated_payload.model_dump()).encode("utf-8"))
+        else:
+            publisher = pubsub_v1.PublisherClient()
+            topic = publisher.topic_path(PROJECT_ID, TOPIC_ID_PREDICTION)
+            publisher.publish(topic, json.dumps(payload.model_dump()).encode("utf-8"))
 
     except Exception as e:
         print(f"Error inserting request to Firestore: {e}")

@@ -20,7 +20,6 @@ class PredictPlantingDate:
 
     def execute(self):
         crop = self.request["crop_type"]
-
         print(f"[PredictPlantingDate worker] start: {self.id_user} with crop: {crop}")
         try:
             crop_id, best_conditions = self._validate_crop_in_db(crop=crop)
@@ -39,6 +38,9 @@ class PredictPlantingDate:
                 "start_date": f"{start_year}0101",  # January 1st, 5 years ago
                 "end_date": f"{end_year}1231"       # December 31st of last year
             }
+
+            self.request["start_date"] = date_range["start_date"]
+            self.request["end_date"] = date_range["end_date"]
 
             print(f"[PredictPlantingDate worker] Fetching data from {date_range['start_date']} to {date_range['end_date']} for location: {location_data}")
 
@@ -96,6 +98,7 @@ class PredictPlantingDate:
     def _make_prediction(self, best_conditions: CropConditionModel, location_data: dict,
                          date_range: dict, start_month: str):
         try:
+
             nasa_data = self._get_nasa_data(location_data=location_data, data_range=date_range)
 
             filtered_data = self._filter_dataset_by_month(nasa_data, start_month)
@@ -131,9 +134,6 @@ class PredictPlantingDate:
         logging.info("[PredictPlantingDate worker] Saving prediction to DB")
         try:
 
-            print(request)
-            print(prediction)
-
             data_to_insert = {
                 "id_user": request["id_user"],
                 "crop_type": request["crop_type"],
@@ -141,15 +141,15 @@ class PredictPlantingDate:
                 "longitude": request["longitude"],
                 "start_date": request["start_date"],
                 "end_date": request["end_date"],
+                "id_request": request["id_request"],
                 "timestamps": [entry.model_dump() for entry in prediction]
             }
-            print(data_to_insert)
 
-            # HistoricalDataCollection().insert(HistoricalDataModel(**data_to_insert))
+            HistoricalDataCollection().insert(HistoricalDataModel(**data_to_insert))
 
 
         except Exception as e:
-            logging.error("[PredictPlantingDate worker] Error saving prediction to DB")
+            logging.error(f"[PredictPlantingDate worker] Error saving prediction to DB: {e}")
             return None
 
     @staticmethod
