@@ -1,10 +1,7 @@
-from ..interface.model_interface import ModelInterface
+from infrastructure.database.interface.model_interface import ModelInterface
 
 
 class CropConditionModel(ModelInterface):
-    """Optimal growing conditions for a crop."""
-
-    crop_key: str
     crop_name: str
     temperature: float  # °C
     humidity: float  # %

@@ -1,7 +1,7 @@
 from firebase_functions import https_fn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import users, publish, dashboard
+from routers import users, publish, prediction, dashboard
 from routers.publish import *
 
 
@@ -16,7 +16,7 @@ app.add_middleware(
     allow_headers=["*"],  # Allows all headers
 )
 
-routes = [users.router, publish.router, dashboard.router]
+routes = [users.router, publish.router, prediction.router, dashboard.router]
 
 # Include routers
 for route in routes:
