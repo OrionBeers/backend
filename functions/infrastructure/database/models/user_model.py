@@ -10,7 +10,7 @@ class UsersModel(ModelInterface):
     name: str
     email: str
     id_google: str
-    avatar: str = None
+    avatar: str = ""
 
     ## Historical data after first research
     historical_data: list[str] = []
