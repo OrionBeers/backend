@@ -5,7 +5,6 @@ from infrastructure.database import database
 from infrastructure.database.exceptions import NoChangesMade
 from infrastructure.database.interface.model_interface import ModelInterface
 
-
 database_connection = database.connect()
 
 class CollectionInterface:
@@ -45,6 +44,22 @@ class CollectionInterface:
 
         if result.modified_count == 0:
             raise NoChangesMade(f'No changes made in update for repository {self.collection_name}')
+
+    def delete(self, filter_by: dict):
+        result = self._collection.delete_one(filter_by)
+
+        if result.deleted_count == 0:
+            raise NoChangesMade(f'No documents deleted from repository {self.collection_name}')
+
+        return result.deleted_count
+
+    def delete_many(self, filter_by: dict):
+        result = self._collection.delete_many(filter_by)
+
+        if result.deleted_count == 0:
+            raise NoChangesMade(f'No documents deleted from repository {self.collection_name}')
+
+        return result.deleted_count
 
     def get_one(self, filter_by: dict, hidden_fields: list[str], force_show_fields: list[str]):
         hidden_fields_dict = {}
