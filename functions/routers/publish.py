@@ -1,33 +1,24 @@
 from firebase_functions import pubsub_fn
 from fastapi import APIRouter
-from google.cloud import pubsub_v1
+from lib.gcloud.pub_sub import PublishPredictionPayload, publish_prediction, TOPIC_ID_PREDICTION
 from publish.predict_planting_date import PredictPlantingDate
-from pydantic import BaseModel
-import json
 
-PROJECT_ID = "orion-beers-backend"
-TOPIC_ID = "prediction"
 
 router = APIRouter(
     prefix="/publish",
     tags=["publish"]
 )
 
-class PublishRequest(BaseModel):
-    user_id: str
-
-# Start Prediction background task by Pub/Sub
 @router.post("/")
-def publish_prediction(request: PublishRequest):
-    publisher = pubsub_v1.PublisherClient()
-    topic = publisher.topic_path(PROJECT_ID, TOPIC_ID)
-    publisher.publish(topic, json.dumps({"user_id": request.user_id}).encode("utf-8"))
+def start_prediction(body: PublishPredictionPayload):
+    # Publish message to "prediction" topic in Pub/Sub to start prediction background task.
+    publish_prediction(body)
 
     return {"message": "Prediction started"}
 
-# Add Pub/Sub worker
+# Pub/Sub subscriber
 # This is triggered when a message is published to "prediction" topic in Pub/Sub
-@pubsub_fn.on_message_published(topic="prediction")
+@pubsub_fn.on_message_published(topic=TOPIC_ID_PREDICTION)
 def start_prediction_worker(event: pubsub_fn.CloudEvent[pubsub_fn.MessagePublishedData]) -> None:
     try:
         data = event.data.message.json
@@ -41,4 +32,5 @@ def start_prediction_worker(event: pubsub_fn.CloudEvent[pubsub_fn.MessagePublish
     # TODO: Update payload
     user_id = data.get("user_id", "unknown")
 
+    # Start prediction
     PredictPlantingDate(user_id).execute()
