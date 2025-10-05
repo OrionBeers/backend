@@ -41,6 +41,10 @@ jobs:
       - name: Deploy
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+          MONGO_USER: ${{ secrets.MONGO_USER }}
+          MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
+          MONGO_CLUSTER: ${{ secrets.MONGO_CLUSTER }}
+          OPEN_AI_API_KEY: ${{ secrets.OPEN_AI_API_KEY }}
         run: |
           firebase deploy \
             --only functions \
