@@ -61,7 +61,7 @@ class CollectionInterface:
 
         return None
 
-    def list(self, filter_by: dict, hidden_fields: [str], force_show_fields: [str]) -> list[dict]:
+    def list(self, filter_by: dict, hidden_fields: list[str], force_show_fields: list[str]) -> list[dict]:
         hidden_fields_dict = {}
 
         fields_to_hide = set(hidden_fields or self.hidden_fields) - set(force_show_fields)

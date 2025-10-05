@@ -1,11 +1,9 @@
 from firebase_functions import https_fn
-from firebase_admin import initialize_app
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routers import users, publish
 from routers.publish import *
 
-initialize_app()
 
 app = FastAPI()
 
