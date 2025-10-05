@@ -4,7 +4,6 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from infrastructure.database import database
 from routers import users
-# from routers import data, items
 
 initialize_app()
 
