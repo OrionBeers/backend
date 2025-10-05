@@ -17,10 +17,65 @@ DATASET
 from __future__ import annotations
 
 import os
-from typing import Optional
+import json
+import logging
+from datetime import datetime
+from typing import Optional, Dict, Any, Tuple
+from dataclasses import dataclass
 
 from openai import OpenAI
+from openai.types.chat import ChatCompletion
+from openai.types.chat.chat_completion import Choice
 from pydantic import BaseModel
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+@dataclass
+class DebugInfo:
+    """Container for debug information about the API call"""
+    request_id: str
+    timestamp: str
+    input_year: str
+    model: str
+    response_time: float
+    raw_response: Optional[ChatCompletion] = None
+    error: Optional[str] = None
+    parse_error: Optional[str] = None
+    validation_error: Optional[str] = None
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert debug info to a dictionary for logging"""
+        return {
+            "request_id": self.request_id,
+            "timestamp": self.timestamp,
+            "input_year": self.input_year,
+            "model": self.model,
+            "response_time": f"{self.response_time:.2f}s",
+            "error": self.error,
+            "parse_error": self.parse_error,
+            "validation_error": self.validation_error,
+            "has_response": self.raw_response is not None,
+            "response_choices": len(self.raw_response.choices) if self.raw_response else 0
+        }
+
+def validate_response(response: ChatCompletion, debug: DebugInfo) -> Tuple[Optional[Choice], bool]:
+    """Validate the OpenAI response"""
+    if not response:
+        debug.validation_error = "Empty response received"
+        return None, False
+        
+    if not response.choices:
+        debug.validation_error = "No choices in response"
+        return None, False
+        
+    choice = response.choices[0]
+    if not choice.message:
+        debug.validation_error = "No message in first choice"
+        return None, False
+        
+    return choice, True
 
 
 # ---------- Output schema (exactly your format) ----------
@@ -56,6 +111,15 @@ def get_month_forecast_array(
     """
     Returns the parsed `forecast` list from the OpenAI response.
     """
+    # Initialize debug info
+    debug = DebugInfo(
+        request_id=f"req_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+        timestamp=datetime.now().isoformat(),
+        input_year=current_year,
+        model="gpt-4",  # Fixed model name
+        response_time=0.0
+    )
+
     try:
         openai_api_key = os.getenv("OPEN_AI_API_KEY")
         if not openai_api_key:
@@ -68,23 +132,72 @@ def get_month_forecast_array(
             current_year=current_year, dataset_nasa=dataset_nasa, best_condition=best_conditions
         )
 
-        response = client.beta.chat.completions.parse(
-            model="gpt-4o",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt},
-            ],
-            max_tokens=4000,
-            response_format=ForecastResponse,
-        )
+        logger.info(f"Starting API request {debug.request_id}")
+        start_time = datetime.now()
 
-        parsed = response.choices[0].message.parsed
-        if not parsed:
+        try:
+            response = client.chat.completions.create(  # Changed to create from parse
+                model="gpt-4",  # Fixed model name
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt},
+                ],
+                max_tokens=4000,
+                response_format={ "type": "json_object" }  # Specify JSON response
+            )
+        except Exception as api_error:
+            debug.error = f"API Error: {str(api_error)}"
+            logger.error(f"API call failed for {debug.request_id}: {debug.error}")
             return None
-        return parsed.forecast
+
+        debug.response_time = (datetime.now() - start_time).total_seconds()
+        debug.raw_response = response
+
+        # Validate response structure
+        choice, is_valid = validate_response(response, debug)
+        if not is_valid:
+            logger.error(f"Response validation failed for {debug.request_id}: {debug.validation_error}")
+            return None
+
+        # Parse the response content
+        try:
+            # First, parse the raw JSON string
+            content = choice.message.content
+            if not content:
+                debug.parse_error = "Empty message content"
+                logger.error(f"Empty content in response for {debug.request_id}")
+                return None
+
+            # Try to parse the JSON string
+            try:
+                raw_json = json.loads(content)
+            except json.JSONDecodeError as e:
+                debug.parse_error = f"JSON decode error: {str(e)}"
+                logger.error(f"JSON parsing failed for {debug.request_id}: {debug.parse_error}")
+                logger.error(f"Raw content: {content[:200]}...")  # Log first 200 chars
+                return None
+
+            # Validate against our model
+            parsed = ForecastResponse.model_validate(raw_json)
+            if not parsed or not parsed.forecast:
+                debug.validation_error = "Empty forecast after parsing"
+                logger.error(f"Empty forecast for {debug.request_id}")
+                return None
+
+            # Log success
+            logger.info(f"Successfully processed request {debug.request_id}")
+            logger.debug(f"Debug info: {json.dumps(debug.to_dict(), indent=2)}")
+            
+            return parsed.forecast
+
+        except Exception as parse_error:
+            debug.parse_error = f"Parse error: {str(parse_error)}"
+            logger.error(f"Parsing failed for {debug.request_id}: {debug.parse_error}")
+            return None
 
     except Exception as e:
-        print(f"Error calling OpenAI API (forecast array): {e}")
+        debug.error = f"Unexpected error: {str(e)}"
+        logger.error(f"Unexpected error in {debug.request_id}: {debug.error}")
         return None
 
 
