@@ -13,14 +13,14 @@ class DashboardGetRequest(BaseModel):
 
 @router.get("/dashboard")
 async def get_dashboard(
-    uid: str = Query(..., description="User UID to search for"),
+    id_user: str = Query(..., description="User UID to search for"),
     history_id: Optional[str] = Query(None, description="History ID to search for"),
 ):
     try:
         print("get_dashboard")
-        print(f"uid: {uid}")
+        print(f"uid: {id_user}")
         print(f"history_id: {history_id}")
-        dashboard_details = DashboardDetails(uid=uid, history_id=history_id)
+        dashboard_details = DashboardDetails(id_user=id_user, history_id=history_id)
         result = dashboard_details.execute()
         print(f"result: {result}")
         return result
@@ -31,4 +31,4 @@ async def get_dashboard(
             raise HTTPException(status_code=404, detail=str(e))
         # For general dashboard list, return 404 with more detail
         else:
-            raise HTTPException(status_code=404, detail=f"No dashboard data found for user: {uid}")
+            raise HTTPException(status_code=404, detail=f"No dashboard data found for user: {id_user}")
