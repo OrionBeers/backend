@@ -65,7 +65,7 @@ def get_month_forecast_array(
 
         system_prompt = "You are a meteorological prediction assistant specialized in NASA POWER datasets."
         user_prompt = build_user_prompt(
-            year=current_year, dataset_nasa=dataset_nasa, best_condition=best_conditions
+            current_year=current_year, dataset_nasa=dataset_nasa, best_condition=best_conditions
         )
 
         response = client.beta.chat.completions.parse(
@@ -93,9 +93,9 @@ def get_month_forecast_array(
 def build_user_prompt(current_year: str, dataset_nasa: dict, best_condition: dict) -> str:
     # English prompt: produce predictions from NASA data and compute a status comparing predictions to best_condition
     return f"""
-You are an expert agronomist and data scientist. You will receive two JSON inputs: `best_condition` (optimal values for a crop) and `nasa_data` (NASA POWER time series). Your job is to:
+You are an expert agronomist and data scientist. You will receive two JSON inputs: `best_condition` (optimal values for a crop) and `nasa_data` (historical NASA POWER time series from past years). Your job is to:
 
-1) From the provided `nasa_data`, generate a daily climatological forecast for the requested month for the next calendar year (year + 1). For each day-of-month produce the following predicted values: moisture, temperature, precipitation, snow_precipitation, soil_temperature, humidity.
+1) Using the provided historical `nasa_data` as a reference, generate a daily climatological forecast for the requested month for the year {int(current_year) + 1}. The forecast should be based on patterns and trends observed in the historical data. For each day-of-month produce the following predicted values: moisture, temperature, precipitation, snow_precipitation, soil_temperature, humidity.
 
 2) For each forecasted day, compute a numeric `status` between 0.00 and 1.00 that indicates how closely the predicted conditions match the provided `best_condition`. Insert `status` as the FIRST field inside `prediction_data`.
 
