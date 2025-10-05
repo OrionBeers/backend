@@ -38,6 +38,12 @@ jobs:
           source venv/bin/activate
           pip install -r requirements.txt
 
+      - name: Create Service Account Key
+        run: |
+          echo '${{ secrets.SERVICE_ACCOUNT_JSON }}' > serviceAccountKey.json
+          chmod 600 serviceAccountKey.json
+          echo "Service account key file created"
+
       - name: Deploy
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
@@ -45,8 +51,15 @@ jobs:
           MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
           MONGO_CLUSTER: ${{ secrets.MONGO_CLUSTER }}
           OPEN_AI_API_KEY: ${{ secrets.OPEN_AI_API_KEY }}
+          GOOGLE_APPLICATION_CREDENTIALS: ./serviceAccountKey.json
         run: |
           firebase deploy \
             --only functions \
             --non-interactive \
             --force
+
+      - name: Cleanup Service Account Key
+        if: always()
+        run: |
+          rm -f serviceAccountKey.json
+          echo "Service account key file cleaned up"
