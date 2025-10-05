@@ -6,5 +6,10 @@
       "ignore": ["venv", ".git", "firebase-debug.log", "firebase-debug.*.log", "*.local"],
       "runtime": "python312"
     }
-  ]
+  ],
+  "emulators": {
+    "pubsub": {
+      "port": "8085"
+    }
+  }
 }
