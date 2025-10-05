@@ -6,6 +6,7 @@ from infrastructure.database.interface.model_interface import ModelInterface
 
 class CropConditionModel(ModelInterface):
     id: str = Field(alias="_id", default_factory=lambda: str(ObjectId()))
+    crop_key: str
     crop_name: str
     temperature: float  # °C
     humidity: float  # %
