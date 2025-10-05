@@ -9,8 +9,7 @@ class UsersModel(ModelInterface):
     name: str
     email: str
     id_google: str
-    avatar: str = None
+    avatar: str = ""
     is_onboarding: bool = True
-
     created_at: datetime = Field(default_factory=lambda: datetime.now())
     updated_at: datetime = Field(default_factory=lambda: datetime.now())
