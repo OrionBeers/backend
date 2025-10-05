@@ -17,13 +17,12 @@ router = APIRouter(
     tags=["Prediction"],
 )
 
-
 class PredictionCreateRequest(BaseModel):
     crop: str
     latitude: float
     longitude: float
     start_month: int
-    id_google: str
+    id_user: str
 
 @router.get("/prediction")
 async def get_result(
@@ -40,7 +39,19 @@ async def get_result(
 def start_prediction(body: PublishPredictionPayload):
     # Publish message to "prediction" topic in Pub/Sub to start prediction background task.
     logger.info(f"Publishing prediction request: {body.model_dump()}")
-    publish_prediction({ **body.model_dump(), "prediction_days": "full", "continue_to_next_month": True })
+
+    # Create a copy of the body's data
+    body_data = body.model_dump()
+
+    # Set default values only if they don't exist already
+    if "prediction_days" not in body_data:
+        body_data["prediction_days"] = "full"
+    if "continue_to_next_month" not in body_data:
+        body_data["continue_to_next_month"] = True
+
+    # Create a new PublishPredictionPayload object with the updated data
+    payload = PublishPredictionPayload(**body_data)
+    publish_prediction(payload)
 
     return {"message": "Prediction started"}
 
@@ -50,11 +61,17 @@ def start_prediction(body: PublishPredictionPayload):
 def start_prediction_worker(event: pubsub_fn.CloudEvent[pubsub_fn.MessagePublishedData]) -> None:
     logger.info("PubSub message received on topic: %s", TOPIC_ID_PREDICTION)
     try:
-        data: PublishPredictionPayload = event.data.message.json
-        logger.info(f"Message data: {json.dumps(data, indent=2)}")
-        if not data:
+        # Parse JSON data from message
+        raw_data = event.data.message.json
+        logger.info(f"Raw message data: {json.dumps(raw_data, indent=2)}")
+
+        if not raw_data:
             logger.error("No JSON payload in the message")
             return
+
+        # Convert the raw dictionary to a PublishPredictionPayload model
+        data = PublishPredictionPayload(**raw_data)
+        logger.info(f"Parsed payload: {data}")
     except ValueError:
         logger.error("Payload is not valid JSON")
         return
@@ -63,34 +80,35 @@ def start_prediction_worker(event: pubsub_fn.CloudEvent[pubsub_fn.MessagePublish
         return
 
     # Extract user ID from payload
-    id_user = data.get("id_user", "unknown")
+    id_user = data.id_user
     logger.info(f"Starting prediction for user: {id_user}")
 
     # Start prediction
     try:
-        PredictPlantingDate(id_user, data).execute()
+        PredictPlantingDate(id_user, raw_data).execute()
         logger.info(f"Prediction completed successfully for user: {id_user}")
 
         # Start next prediction if needed
         # TODO: This should be decided by prediction result
         to_be_continued = False
         if to_be_continued == True:
-            start_month = data.get("start_month")
-            if data.get("continue_to_next_month"):
+            start_month = data.start_month
+            if data.continue_to_next_month:
                 start_month = start_month + 1
 
             # If continue_to_next_month is False, then continue to next month
-            continue_to_next_month = not data.get("continue_to_next_month")
+            continue_to_next_month = not data.continue_to_next_month
 
-            payload = {
-                **data,
-                "id_request": data.get("id_request"),
-                "prediction_days": "half",
-                "start_month": start_month,
-                "continue_to_next_month": continue_to_next_month
-            }
+            # Create a new payload dictionary with updated values
+            new_data = data.model_dump()
+            new_data["id_request"] = data.id_request
+            new_data["prediction_days"] = "half"
+            new_data["start_month"] = start_month
+            new_data["continue_to_next_month"] = continue_to_next_month
 
-            publish_prediction(payload)
+            # Create a new PublishPredictionPayload from the dictionary
+            new_payload = PublishPredictionPayload(**new_data)
+            publish_prediction(new_payload)
 
     except Exception as e:
         logger.error(f"Prediction failed for user {id_user}: {str(e)}")
