@@ -20,6 +20,6 @@ $ firebase emulators:start
 
 When you make changes to your project, the server will automatically reload.
 
-## Deploying to Vercel
+## Deployment
 
 Merge the changes to the main branch.
