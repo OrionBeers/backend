@@ -4,7 +4,9 @@ import logging
 import requests
 
 from infrastructure.database.collections.crops_conditions_collection import CropsConditionCollection
+from infrastructure.database.collections.historical_data_collection import HistoricalDataCollection
 from infrastructure.database.models.crop_condition_model import CropConditionModel
+from infrastructure.database.models.historical_data_model import HistoricalDataModel
 from lib.api.chatgpt.best_condition import get_crop_best_conditions
 from lib.api.chatgpt.prediction_ai import get_month_forecast_array
 
@@ -114,14 +116,41 @@ class PredictPlantingDate:
             if not result:
                 raise Exception("[PredictPlantingDate worker] Prediction API returned no data")
 
+            self._save_prediction_to_db(request=self.request, prediction=result)
+            
             return result
-
 
         except Exception as e:
             print(f"[PredictPlantingDate worker] Error making prediction: {e}")
             return None
 
 
+
+    @staticmethod
+    def _save_prediction_to_db(request:dict, prediction: list):
+        logging.info("[PredictPlantingDate worker] Saving prediction to DB")
+        try:
+
+            print(request)
+            print(prediction)
+
+            data_to_insert = {
+                "id_user": request["id_user"],
+                "crop_type": request["crop_type"],
+                "latitude": request["latitude"],
+                "longitude": request["longitude"],
+                "start_date": request["start_date"],
+                "end_date": request["end_date"],
+                "timestamps": [entry.model_dump() for entry in prediction]
+            }
+            print(data_to_insert)
+
+            # HistoricalDataCollection().insert(HistoricalDataModel(**data_to_insert))
+
+
+        except Exception as e:
+            logging.error("[PredictPlantingDate worker] Error saving prediction to DB")
+            return None
 
     @staticmethod
     def _get_nasa_data(location_data:dict, data_range:dict):
