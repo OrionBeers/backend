@@ -2,8 +2,8 @@ from firebase_functions import https_fn
 from firebase_admin import initialize_app
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from infrastructure.database import database
-from routers import users
+from routers import users, publish
+from routers.publish import *
 
 initialize_app()
 
@@ -18,7 +18,7 @@ app.add_middleware(
     allow_headers=["*"],  # Allows all headers
 )
 
-routes = [users.router]
+routes = [users.router, publish.router]
 
 # Include routers
 for route in routes:
